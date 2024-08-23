@@ -13,6 +13,12 @@ import * as graphql from "@nestjs/graphql";
 import { GraphQLError } from "graphql";
 import { isRecordNotFoundError } from "../../prisma.util";
 import { MetaQueryPayload } from "../../util/MetaQueryPayload";
+import * as nestAccessControl from "nest-access-control";
+import * as gqlACGuard from "../../auth/gqlAC.guard";
+import { GqlDefaultAuthGuard } from "../../auth/gqlDefaultAuth.guard";
+import * as common from "@nestjs/common";
+import { AclFilterResponseInterceptor } from "../../interceptors/aclFilterResponse.interceptor";
+import { AclValidateRequestInterceptor } from "../../interceptors/aclValidateRequest.interceptor";
 import { Meter } from "./Meter";
 import { MeterCountArgs } from "./MeterCountArgs";
 import { MeterFindManyArgs } from "./MeterFindManyArgs";
@@ -24,10 +30,20 @@ import { UsageFindManyArgs } from "../../usage/base/UsageFindManyArgs";
 import { Usage } from "../../usage/base/Usage";
 import { User } from "../../user/base/User";
 import { MeterService } from "../meter.service";
+@common.UseGuards(GqlDefaultAuthGuard, gqlACGuard.GqlACGuard)
 @graphql.Resolver(() => Meter)
 export class MeterResolverBase {
-  constructor(protected readonly service: MeterService) {}
+  constructor(
+    protected readonly service: MeterService,
+    protected readonly rolesBuilder: nestAccessControl.RolesBuilder
+  ) {}
 
+  @graphql.Query(() => MetaQueryPayload)
+  @nestAccessControl.UseRoles({
+    resource: "Meter",
+    action: "read",
+    possession: "any",
+  })
   async _metersMeta(
     @graphql.Args() args: MeterCountArgs
   ): Promise<MetaQueryPayload> {
@@ -37,12 +53,24 @@ export class MeterResolverBase {
     };
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @graphql.Query(() => [Meter])
+  @nestAccessControl.UseRoles({
+    resource: "Meter",
+    action: "read",
+    possession: "any",
+  })
   async meters(@graphql.Args() args: MeterFindManyArgs): Promise<Meter[]> {
     return this.service.meters(args);
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @graphql.Query(() => Meter, { nullable: true })
+  @nestAccessControl.UseRoles({
+    resource: "Meter",
+    action: "read",
+    possession: "own",
+  })
   async meter(
     @graphql.Args() args: MeterFindUniqueArgs
   ): Promise<Meter | null> {
@@ -53,7 +81,13 @@ export class MeterResolverBase {
     return result;
   }
 
+  @common.UseInterceptors(AclValidateRequestInterceptor)
   @graphql.Mutation(() => Meter)
+  @nestAccessControl.UseRoles({
+    resource: "Meter",
+    action: "create",
+    possession: "any",
+  })
   async createMeter(@graphql.Args() args: CreateMeterArgs): Promise<Meter> {
     return await this.service.createMeter({
       ...args,
@@ -69,7 +103,13 @@ export class MeterResolverBase {
     });
   }
 
+  @common.UseInterceptors(AclValidateRequestInterceptor)
   @graphql.Mutation(() => Meter)
+  @nestAccessControl.UseRoles({
+    resource: "Meter",
+    action: "update",
+    possession: "any",
+  })
   async updateMeter(
     @graphql.Args() args: UpdateMeterArgs
   ): Promise<Meter | null> {
@@ -97,6 +137,11 @@ export class MeterResolverBase {
   }
 
   @graphql.Mutation(() => Meter)
+  @nestAccessControl.UseRoles({
+    resource: "Meter",
+    action: "delete",
+    possession: "any",
+  })
   async deleteMeter(
     @graphql.Args() args: DeleteMeterArgs
   ): Promise<Meter | null> {
@@ -112,7 +157,13 @@ export class MeterResolverBase {
     }
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @graphql.ResolveField(() => [Usage], { name: "usages" })
+  @nestAccessControl.UseRoles({
+    resource: "Usage",
+    action: "read",
+    possession: "any",
+  })
   async findUsages(
     @graphql.Parent() parent: Meter,
     @graphql.Args() args: UsageFindManyArgs
@@ -126,9 +177,15 @@ export class MeterResolverBase {
     return results;
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @graphql.ResolveField(() => User, {
     nullable: true,
     name: "user",
+  })
+  @nestAccessControl.UseRoles({
+    resource: "User",
+    action: "read",
+    possession: "any",
   })
   async getUser(@graphql.Parent() parent: Meter): Promise<User | null> {
     const result = await this.service.getUser(parent.id);

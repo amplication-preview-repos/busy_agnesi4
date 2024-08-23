@@ -16,7 +16,11 @@ import * as errors from "../../errors";
 import { Request } from "express";
 import { plainToClass } from "class-transformer";
 import { ApiNestedQuery } from "../../decorators/api-nested-query.decorator";
+import * as nestAccessControl from "nest-access-control";
+import * as defaultAuthGuard from "../../auth/defaultAuth.guard";
 import { MeterService } from "../meter.service";
+import { AclValidateRequestInterceptor } from "../../interceptors/aclValidateRequest.interceptor";
+import { AclFilterResponseInterceptor } from "../../interceptors/aclFilterResponse.interceptor";
 import { MeterCreateInput } from "./MeterCreateInput";
 import { Meter } from "./Meter";
 import { MeterFindManyArgs } from "./MeterFindManyArgs";
@@ -26,10 +30,24 @@ import { UsageFindManyArgs } from "../../usage/base/UsageFindManyArgs";
 import { Usage } from "../../usage/base/Usage";
 import { UsageWhereUniqueInput } from "../../usage/base/UsageWhereUniqueInput";
 
+@swagger.ApiBearerAuth()
+@common.UseGuards(defaultAuthGuard.DefaultAuthGuard, nestAccessControl.ACGuard)
 export class MeterControllerBase {
-  constructor(protected readonly service: MeterService) {}
+  constructor(
+    protected readonly service: MeterService,
+    protected readonly rolesBuilder: nestAccessControl.RolesBuilder
+  ) {}
+  @common.UseInterceptors(AclValidateRequestInterceptor)
   @common.Post()
   @swagger.ApiCreatedResponse({ type: Meter })
+  @nestAccessControl.UseRoles({
+    resource: "Meter",
+    action: "create",
+    possession: "any",
+  })
+  @swagger.ApiForbiddenResponse({
+    type: errors.ForbiddenException,
+  })
   async createMeter(@common.Body() data: MeterCreateInput): Promise<Meter> {
     return await this.service.createMeter({
       data: {
@@ -59,9 +77,18 @@ export class MeterControllerBase {
     });
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @common.Get()
   @swagger.ApiOkResponse({ type: [Meter] })
   @ApiNestedQuery(MeterFindManyArgs)
+  @nestAccessControl.UseRoles({
+    resource: "Meter",
+    action: "read",
+    possession: "any",
+  })
+  @swagger.ApiForbiddenResponse({
+    type: errors.ForbiddenException,
+  })
   async meters(@common.Req() request: Request): Promise<Meter[]> {
     const args = plainToClass(MeterFindManyArgs, request.query);
     return this.service.meters({
@@ -84,9 +111,18 @@ export class MeterControllerBase {
     });
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @common.Get("/:id")
   @swagger.ApiOkResponse({ type: Meter })
   @swagger.ApiNotFoundResponse({ type: errors.NotFoundException })
+  @nestAccessControl.UseRoles({
+    resource: "Meter",
+    action: "read",
+    possession: "own",
+  })
+  @swagger.ApiForbiddenResponse({
+    type: errors.ForbiddenException,
+  })
   async meter(
     @common.Param() params: MeterWhereUniqueInput
   ): Promise<Meter | null> {
@@ -116,9 +152,18 @@ export class MeterControllerBase {
     return result;
   }
 
+  @common.UseInterceptors(AclValidateRequestInterceptor)
   @common.Patch("/:id")
   @swagger.ApiOkResponse({ type: Meter })
   @swagger.ApiNotFoundResponse({ type: errors.NotFoundException })
+  @nestAccessControl.UseRoles({
+    resource: "Meter",
+    action: "update",
+    possession: "any",
+  })
+  @swagger.ApiForbiddenResponse({
+    type: errors.ForbiddenException,
+  })
   async updateMeter(
     @common.Param() params: MeterWhereUniqueInput,
     @common.Body() data: MeterUpdateInput
@@ -164,6 +209,14 @@ export class MeterControllerBase {
   @common.Delete("/:id")
   @swagger.ApiOkResponse({ type: Meter })
   @swagger.ApiNotFoundResponse({ type: errors.NotFoundException })
+  @nestAccessControl.UseRoles({
+    resource: "Meter",
+    action: "delete",
+    possession: "any",
+  })
+  @swagger.ApiForbiddenResponse({
+    type: errors.ForbiddenException,
+  })
   async deleteMeter(
     @common.Param() params: MeterWhereUniqueInput
   ): Promise<Meter | null> {
@@ -196,8 +249,14 @@ export class MeterControllerBase {
     }
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @common.Get("/:id/usages")
   @ApiNestedQuery(UsageFindManyArgs)
+  @nestAccessControl.UseRoles({
+    resource: "Usage",
+    action: "read",
+    possession: "any",
+  })
   async findUsages(
     @common.Req() request: Request,
     @common.Param() params: MeterWhereUniqueInput
@@ -230,6 +289,11 @@ export class MeterControllerBase {
   }
 
   @common.Post("/:id/usages")
+  @nestAccessControl.UseRoles({
+    resource: "Meter",
+    action: "update",
+    possession: "any",
+  })
   async connectUsages(
     @common.Param() params: MeterWhereUniqueInput,
     @common.Body() body: UsageWhereUniqueInput[]
@@ -247,6 +311,11 @@ export class MeterControllerBase {
   }
 
   @common.Patch("/:id/usages")
+  @nestAccessControl.UseRoles({
+    resource: "Meter",
+    action: "update",
+    possession: "any",
+  })
   async updateUsages(
     @common.Param() params: MeterWhereUniqueInput,
     @common.Body() body: UsageWhereUniqueInput[]
@@ -264,6 +333,11 @@ export class MeterControllerBase {
   }
 
   @common.Delete("/:id/usages")
+  @nestAccessControl.UseRoles({
+    resource: "Meter",
+    action: "update",
+    possession: "any",
+  })
   async disconnectUsages(
     @common.Param() params: MeterWhereUniqueInput,
     @common.Body() body: UsageWhereUniqueInput[]

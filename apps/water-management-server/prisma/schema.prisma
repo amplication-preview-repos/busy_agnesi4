@@ -69,10 +69,64 @@ model User {
   username  String   @unique
 }
 
+model PrepaidMeter {
+  alerts         Alert[]
+  commands       Command[]
+  createdAt      DateTime                @default(now())
+  id             String                  @id @default(cuid())
+  meterDataItems MeterData[]
+  meterNumber    String?
+  status         EnumPrepaidMeterStatus?
+  updatedAt      DateTime                @updatedAt
+}
+
+model Command {
+  commandType    EnumCommandCommandType?
+  createdAt      DateTime                @default(now())
+  id             String                  @id @default(cuid())
+  parameter      String?
+  prepaidMeter   PrepaidMeter?           @relation(fields: [prepaidMeterId], references: [id])
+  prepaidMeterId String?
+  sentAt         DateTime?
+  updatedAt      DateTime                @updatedAt
+}
+
+model MeterData {
+  createdAt      DateTime      @default(now())
+  id             String        @id @default(cuid())
+  prepaidMeter   PrepaidMeter? @relation(fields: [prepaidMeterId], references: [id])
+  prepaidMeterId String?
+  timestamp      DateTime?
+  updatedAt      DateTime      @updatedAt
+  value          Float?
+}
+
+model Alert {
+  createdAt      DateTime        @default(now())
+  id             String          @id @default(cuid())
+  level          EnumAlertLevel?
+  message        String?
+  prepaidMeter   PrepaidMeter?   @relation(fields: [prepaidMeterId], references: [id])
+  prepaidMeterId String?
+  updatedAt      DateTime        @updatedAt
+}
+
 enum EnumMeterStatus {
   Option1
 }
 
 enum EnumTicketStatus {
+  Option1
+}
+
+enum EnumPrepaidMeterStatus {
+  Option1
+}
+
+enum EnumCommandCommandType {
+  Option1
+}
+
+enum EnumAlertLevel {
   Option1
 }

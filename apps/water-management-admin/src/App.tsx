@@ -25,7 +25,23 @@ import { UserList } from "./user/UserList";
 import { UserCreate } from "./user/UserCreate";
 import { UserEdit } from "./user/UserEdit";
 import { UserShow } from "./user/UserShow";
-import { jwtAuthProvider } from "./auth-provider/ra-auth-jwt";
+import { PrepaidMeterList } from "./prepaidMeter/PrepaidMeterList";
+import { PrepaidMeterCreate } from "./prepaidMeter/PrepaidMeterCreate";
+import { PrepaidMeterEdit } from "./prepaidMeter/PrepaidMeterEdit";
+import { PrepaidMeterShow } from "./prepaidMeter/PrepaidMeterShow";
+import { CommandList } from "./command/CommandList";
+import { CommandCreate } from "./command/CommandCreate";
+import { CommandEdit } from "./command/CommandEdit";
+import { CommandShow } from "./command/CommandShow";
+import { MeterDataList } from "./meterData/MeterDataList";
+import { MeterDataCreate } from "./meterData/MeterDataCreate";
+import { MeterDataEdit } from "./meterData/MeterDataEdit";
+import { MeterDataShow } from "./meterData/MeterDataShow";
+import { AlertList } from "./alert/AlertList";
+import { AlertCreate } from "./alert/AlertCreate";
+import { AlertEdit } from "./alert/AlertEdit";
+import { AlertShow } from "./alert/AlertShow";
+import { httpAuthProvider } from "./auth-provider/ra-auth-http";
 
 const App = (): React.ReactElement => {
   const [dataProvider, setDataProvider] = useState<DataProvider | null>(null);
@@ -46,7 +62,7 @@ const App = (): React.ReactElement => {
       <Admin
         title={"WaterManagement"}
         dataProvider={dataProvider}
-        authProvider={jwtAuthProvider}
+        authProvider={httpAuthProvider}
         theme={theme}
         dashboard={Dashboard}
         loginPage={Login}
@@ -85,6 +101,34 @@ const App = (): React.ReactElement => {
           edit={UserEdit}
           create={UserCreate}
           show={UserShow}
+        />
+        <Resource
+          name="PrepaidMeter"
+          list={PrepaidMeterList}
+          edit={PrepaidMeterEdit}
+          create={PrepaidMeterCreate}
+          show={PrepaidMeterShow}
+        />
+        <Resource
+          name="Command"
+          list={CommandList}
+          edit={CommandEdit}
+          create={CommandCreate}
+          show={CommandShow}
+        />
+        <Resource
+          name="MeterData"
+          list={MeterDataList}
+          edit={MeterDataEdit}
+          create={MeterDataCreate}
+          show={MeterDataShow}
+        />
+        <Resource
+          name="Alert"
+          list={AlertList}
+          edit={AlertEdit}
+          create={AlertCreate}
+          show={AlertShow}
         />
       </Admin>
     </div>
